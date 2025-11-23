@@ -8,6 +8,8 @@ from datetime import datetime
 from dbfread import DBF
 
 
+
+
 #------- код отвечающий за создание json из dbf
 def dbf_to_json(dbf_file_path, json_file_path):
     # Читаем DBF файл
@@ -242,6 +244,44 @@ def json_to_dbf_corrected(json_file_path, dbf_file_path, field_defs_str):
     print(f"Успешно создано записей: {successful}")
 
 
+def update_json_by_lc_list(input_file, output_file, lc_list, new_destruction_date):
+    """
+    Обновляет поле D_DESTR в JSON файле для указанных лицевых счетов
+
+    Args:
+        input_file: путь к исходному JSON файлу
+        output_file: путь для сохранения обновленного файла
+        lc_list: список лицевых счетов для обновления
+        new_destruction_date: новая дата для поля D_DESTR
+    """
+
+    # Чтение исходного файла
+    with open(input_file, 'r', encoding='utf-8') as f:
+        data = json.load(f)
+
+    # Обновление записей
+    updated = []
+    not_found = []
+
+    for lc in lc_list:
+        if lc in data:
+            data[lc]["D_DESTR"] = new_destruction_date
+            updated.append(lc)
+        else:
+            not_found.append(lc)
+
+    # Сохранение обновленного файла
+    with open(output_file, 'w', encoding='utf-8') as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+
+    # Отчет
+    print(f"Обновлено записей: {len(updated)}")
+    if updated:
+        print(f"Обновленные ЛС: {', '.join(updated)}")
+    if not_found:
+        print(f"Не найдено: {len(not_found)}")
+        print(f"Не найдены в JSON: {', '.join(not_found)}")
+
 
 class ParserXlS:
 
@@ -249,7 +289,7 @@ class ParserXlS:
         if not os.path.exists(filexls):
             raise FileNotFoundError(f"Файл {filexls} не найден")
         self.filexls = filexls
-        self.all_data = {}
+        self.all_data = None
 
     def __str__(self):
         return self.filexls
@@ -285,3 +325,13 @@ class ParserXlS:
 
         except Exception as e:
             raise RuntimeError(f"Ошибка при парсинге файла {self.filexls}: {e}")
+
+    def get_list_lc(self):
+        lst1 = self.all_data["Лист1"]
+        l = []
+        for x in lst1:
+            ls = str(x[" Л/счет"])
+            if len(ls) == 5 :
+                ls = "0" + ls
+            l.append(ls)
+        return l
