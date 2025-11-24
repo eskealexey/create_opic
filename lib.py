@@ -41,75 +41,6 @@ def dbf_to_json(dbf_file_path, json_file_path):
 # -----------------------------------------------------------------------------------------------------------------
 
 
-# ------- код отвечающий за объединение json файлов--------------------------
-def smart_json_merge(file1, file2, output_file):
-    """
-    Умное объединение с проверкой структуры и обработкой ошибок
-    """
-    try:
-        # Читаем файлы
-        with open(file1, 'r', encoding='utf-8') as f:
-            data1 = json.load(f)
-
-        with open(file2, 'r', encoding='utf-8') as f:
-            data2 = json.load(f)
-
-        # Проверяем, что это словари (как в вашем случае)
-        if not isinstance(data1, dict) or not isinstance(data2, dict):
-            raise ValueError("Оба файла должны содержать JSON объекты (словари)")
-
-        # Проверяем структуру первых записей (если есть)
-        if data1 and data2:
-            sample_key1 = next(iter(data1))
-            sample_key2 = next(iter(data2))
-
-            if isinstance(data1[sample_key1], dict) and isinstance(data2[sample_key2], dict):
-                keys1 = set(data1[sample_key1].keys())
-                keys2 = set(data2[sample_key2].keys())
-
-                if keys1 != keys2:
-                    print(f"Предупреждение: структуры записей различаются")
-                    print(f"Общие поля: {keys1 & keys2}")
-                    print(f"Уникальные в file1: {keys1 - keys2}")
-                    print(f"Уникальные в file2: {keys2 - keys1}")
-
-        # Объединяем данные
-        merged_data = {}
-
-        # Сначала добавляем все из первого файла
-        merged_data.update(data1)
-
-        # Затем добавляем/перезаписываем данными из второго файла
-        merged_data.update(data2)
-
-        # Сохраняем результат
-        with open(output_file, 'w', encoding='utf-8') as f:
-            json.dump(merged_data, f, ensure_ascii=False, indent=2)
-
-        # Статистика
-        common_keys = set(data1.keys()) & set(data2.keys())
-        unique_in_file1 = set(data1.keys()) - set(data2.keys())
-        unique_in_file2 = set(data2.keys()) - set(data1.keys())
-
-        print("=" * 50)
-        print("ОТЧЕТ ОБ ОБЪЕДИНЕНИИ")
-        print("=" * 50)
-        print(f"Файл 1 ({file1}): {len(data1)} записей")
-        print(f"Файл 2 ({file2}): {len(data2)} записей")
-        print(f"Результат: {len(merged_data)} записей")
-        print(f"Общие ключи: {len(common_keys)}")
-        print(f"Уникальные в file1: {len(unique_in_file1)}")
-        print(f"Уникальные в file2: {len(unique_in_file2)}")
-        print(f"Файл сохранен: {output_file}")
-
-        return merged_data
-
-    except Exception as e:
-        print(f"Ошибка при объединении: {e}")
-        return None
-# -----------------------------------------------------------------------------------------------------------------
-
-
 # ------- код отвечающий за создание dbf из json
 def parse_field_definitions(field_defs_str):
     """
@@ -205,9 +136,9 @@ def json_to_dbf_corrected(json_file_path, dbf_file_path, field_defs_str):
     field_definitions = parse_field_definitions(field_defs_str)
     field_spec = ";".join(field_definitions)
 
-    print("Создаваемые поля DBF:")
-    for i, field in enumerate(field_definitions, 1):
-        print(f"  {i}. {field}")
+    # print("Создаваемые поля DBF:")
+    # for i, field in enumerate(field_definitions, 1):
+    #     print(f"  {i}. {field}")
 
     # Создаем таблицу
     table = dbf.Table(dbf_file_path, field_spec, codepage='cp866')
@@ -290,6 +221,7 @@ class ParserXlS:
             raise FileNotFoundError(f"Файл {filexls} не найден")
         self.filexls = filexls
         self.all_data = None
+        self.parser()
 
     def __str__(self):
         return self.filexls
